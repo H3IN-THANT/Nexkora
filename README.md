@@ -1,8 +1,8 @@
-# DevAssist
+# Nexkora
 
 AI-powered developer productivity assistant.
 
-DevAssist is a full-stack AI application designed to help developers with code explanation, code generation, debugging, documentation, knowledge Q&A, and document-based question answering using Retrieval-Augmented Generation (RAG).
+Nexkora is a full-stack AI application designed to help developers with code explanation, code generation, debugging, documentation, knowledge Q&A, and document-based question answering using Retrieval-Augmented Generation (RAG).
 
 ## Tech Stack
 
