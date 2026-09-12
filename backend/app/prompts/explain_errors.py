@@ -54,7 +54,7 @@ clearly state what additional information is needed.
 """.strip()
 
 
-def build_explain_errors_prompt(error_input: str) -> str:
+def build_prompt(error_input: str) -> str:
     """
     Build the user-facing prompt for Explain Errors mode.
 

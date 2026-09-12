@@ -61,7 +61,7 @@ If there are no additional suggestions, say so clearly.
 """.strip()
 
 
-def build_refactor_code_prompt(code: str) -> str:
+def build_prompt(code: str) -> str:
     """
     Build the user-facing prompt for the Refactor Code mode.
 
