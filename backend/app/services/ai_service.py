@@ -17,7 +17,7 @@ class AIService:
 
         model = os.getenv(
             "GEMINI_MODEL",
-            "gemini-3.8-flash",
+            "gemini-3.7-flash",
         )
 
         if not api_key:
@@ -43,11 +43,41 @@ class AIService:
         while user_input contains the task-specific content.
         """
 
-        interaction = self.client.interactions.create(
-            model=self.model,
-            system_instruction=system_instruction,
-            input=user_input,
-        )
+        try:
+            interaction = self.client.interactions.create(
+                model=self.model,
+                system_instruction=system_instruction,
+                input=user_input,
+            )
+
+        except Exception as exc:
+            error_message = str(exc).lower()
+
+            if (
+                "quota" in error_message
+                or "rate limit" in error_message
+                or "resource_exhausted" in error_message
+                or "429" in error_message
+            ):
+                raise RuntimeError(
+                    "Gemini API quota has been exceeded. "
+                    "Please try again later or use a Gemini API "
+                    "project with available quota."
+                ) from exc
+
+            if (
+                "high demand" in error_message
+                or "temporarily unavailable" in error_message
+                or "503" in error_message
+            ):
+                raise RuntimeError(
+                    "Gemini is temporarily unavailable due to "
+                    "high demand. Please try again shortly."
+                ) from exc
+
+            raise RuntimeError(
+                f"Gemini API request failed: {exc}"
+            ) from exc
 
         response_text = interaction.output_text
 

@@ -10,6 +10,8 @@ from app.schemas.chat import ChatRequest, ChatResponse
 from app.services.ai_service import AIService
 from app.services.document_service import DocumentService
 
+from app.api.routes import github
+
 from app.schemas.document import (
     DocumentAnswer,
     DocumentQuestion,
@@ -42,6 +44,10 @@ app = FastAPI(
     version="0.5.0",
 )
 
+app.include_router(
+    github.router,
+    prefix="/api/v1",
+)
 
 ALLOWED_ORIGINS = [
     "http://localhost:3000",

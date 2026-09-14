@@ -3,8 +3,6 @@ from pathlib import Path
 from uuid import uuid4
 
 
-ALLOWED_EXTENSIONS = {".txt", ".md"}
-
 MAX_FILE_SIZE = 2 * 1024 * 1024  # 2 MB
 
 CHUNK_SIZE = 1500
@@ -17,6 +15,7 @@ class Document:
     filename: str
     text: str
     chunks: list[str]
+    metadata: dict[str, str] | None = None
 
 
 class DocumentService:
@@ -27,12 +26,11 @@ class DocumentService:
         filename: str,
         content: bytes,
     ) -> None:
-        extension = Path(filename).suffix.lower()
+        """Validate document input before processing."""
 
-        if extension not in ALLOWED_EXTENSIONS:
+        if not filename:
             raise ValueError(
-                "Unsupported file type. "
-                "Only .txt and .md files are supported."
+                "A filename is required."
             )
 
         if not content:
@@ -50,6 +48,8 @@ class DocumentService:
         self,
         content: bytes,
     ) -> str:
+        """Decode UTF-8 text from document content."""
+
         try:
             text = content.decode(
                 "utf-8",
@@ -74,6 +74,8 @@ class DocumentService:
         self,
         text: str,
     ) -> list[str]:
+        """Split text into overlapping chunks."""
+
         chunks: list[str] = []
 
         start = 0
@@ -101,7 +103,11 @@ class DocumentService:
         self,
         filename: str,
         content: bytes,
+        document_id: str | None = None,
+        metadata: dict[str, str] | None = None,
     ) -> Document:
+        """Validate, extract, and chunk a text document."""
+
         self.validate_file(
             filename,
             content,
@@ -117,8 +123,9 @@ class DocumentService:
             )
 
         return Document(
-            document_id=str(uuid4()),
+            document_id=document_id or str(uuid4()),
             filename=Path(filename).name,
             text=text,
             chunks=chunks,
+            metadata=metadata,
         )

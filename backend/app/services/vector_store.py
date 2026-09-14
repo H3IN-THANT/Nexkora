@@ -15,7 +15,7 @@ VECTOR_DB_PATH = (
     / "chroma"
 )
 
-COLLECTION_NAME = "nexkora_documents_v2"
+COLLECTION_NAME = "nexkora_documents_local"
 
 
 class VectorStore:
@@ -88,4 +88,12 @@ class VectorStore:
                 "metadatas",
                 "distances",
             ],
+        )
+    def get_all(self) -> dict:
+        """Return all stored chunks for debugging."""
+        return self.collection.get(
+            include=[
+                "documents",
+                "metadatas",
+            ]
         )

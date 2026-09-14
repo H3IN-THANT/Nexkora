@@ -1,38 +1,16 @@
-import os
-
-from dotenv import load_dotenv
-from google import genai
-from google.genai import types
+from sentence_transformers import SentenceTransformer
 
 
-load_dotenv()
-
-
-DEFAULT_EMBEDDING_MODEL = "gemini-embedding-2"
-DEFAULT_OUTPUT_DIMENSIONALITY = 768
+DEFAULT_EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 
 
 class EmbeddingService:
-    """Generate embeddings for document retrieval."""
+    """Generate local embeddings for document retrieval."""
 
     def __init__(self) -> None:
-        api_key = os.getenv("GEMINI_API_KEY")
-
-        model = os.getenv(
-            "GEMINI_EMBEDDING_MODEL",
-            DEFAULT_EMBEDDING_MODEL,
+        self.model = SentenceTransformer(
+            DEFAULT_EMBEDDING_MODEL
         )
-
-        if not api_key:
-            raise RuntimeError(
-                "GEMINI_API_KEY is not configured."
-            )
-
-        self.client = genai.Client(
-            api_key=api_key
-        )
-
-        self.model = model
 
     def _embed(
         self,
@@ -47,36 +25,19 @@ class EmbeddingService:
                 "Cannot generate an embedding for empty text."
             )
 
-        result = self.client.models.embed_content(
-            model=self.model,
-            contents=text,
-            config=types.EmbedContentConfig(
-                output_dimensionality=(
-                    DEFAULT_OUTPUT_DIMENSIONALITY
-                ),
-            ),
+        embedding = self.model.encode(
+            text,
+            normalize_embeddings=True,
         )
 
-        if not result.embeddings:
-            raise RuntimeError(
-                "Gemini returned no embedding."
-            )
-
-        embedding = result.embeddings[0].values
-
-        if not embedding:
-            raise RuntimeError(
-                "Gemini returned an empty embedding."
-            )
-
-        return list(embedding)
+        return embedding.tolist()
 
     def embed_document(
         self,
         text: str,
         title: str | None = None,
     ) -> list[float]:
-        """Embed a document chunk for question-answering retrieval."""
+        """Embed a document chunk for retrieval."""
 
         title = title or "none"
 
@@ -90,7 +51,7 @@ class EmbeddingService:
         self,
         query: str,
     ) -> list[float]:
-        """Embed a user question for question-answering retrieval."""
+        """Embed a user question for retrieval."""
 
         formatted_query = (
             f"task: question answering | query: {query}"

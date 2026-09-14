@@ -2,7 +2,9 @@ from app.services.document_service import Document
 from app.services.embedding_service import EmbeddingService
 from app.services.vector_store import VectorStore
 
+
 MAX_DISTANCE = 0.65
+
 
 class RAGService:
     """Coordinate document indexing and vector retrieval."""
@@ -51,13 +53,16 @@ class RAGService:
             documents.append(chunk)
             embeddings.append(embedding)
 
-            metadatas.append(
-                {
-                    "document_id": document.document_id,
-                    "filename": document.filename,
-                    "chunk_index": index,
-                }
-            )
+            metadata = {
+                "document_id": document.document_id,
+                "filename": document.filename,
+                "chunk_index": index,
+            }
+
+            if document.metadata:
+                metadata.update(document.metadata)
+
+            metadatas.append(metadata)
 
         self.vector_store.upsert_chunks(
             ids=ids,
@@ -95,9 +100,20 @@ class RAGService:
             ],
         )
 
-        documents = results.get("documents", [[]])[0]
-        metadatas = results.get("metadatas", [[]])[0]
-        distances = results.get("distances", [[]])[0]
+        documents = results.get(
+            "documents",
+            [[]],
+        )[0]
+
+        metadatas = results.get(
+            "metadatas",
+            [[]],
+        )[0]
+
+        distances = results.get(
+            "distances",
+            [[]],
+        )[0]
 
         retrieved_chunks = []
 
@@ -107,7 +123,8 @@ class RAGService:
             distances,
         ):
             if distance > MAX_DISTANCE:
-              continue
+                continue
+
             retrieved_chunks.append(
                 {
                     "text": document,
@@ -117,3 +134,45 @@ class RAGService:
             )
 
         return retrieved_chunks
+
+    def _chunk_text(
+        self,
+        text: str,
+        chunk_size: int = 1000,
+        overlap: int = 200,
+    ) -> list[str]:
+        """Split long text content into overlapping chunks."""
+
+        if not text:
+            return []
+
+        cleaned = text.strip()
+
+        if not cleaned:
+            return []
+
+        if len(cleaned) <= chunk_size:
+            return [cleaned]
+
+        chunks: list[str] = []
+        start = 0
+
+        while start < len(cleaned):
+            end = min(
+                start + chunk_size,
+                len(cleaned)
+            )
+
+            chunks.append(
+                cleaned[start:end]
+            )
+
+            if end == len(cleaned):
+                break
+
+            start = max(
+                end - overlap,
+                start + 1,
+            )
+
+        return chunks
