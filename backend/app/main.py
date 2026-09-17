@@ -4,13 +4,11 @@ from app.services.rag_service import RAGService
 from app.services.vector_store import VectorStore
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.prompts.registry import get_prompt
 from app.schemas.chat import ChatRequest, ChatResponse
 from app.services.ai_service import AIService
-from app.services.document_service import DocumentService
 
 from app.api.routes import github
 
@@ -23,9 +21,15 @@ from app.services.document_service import (
     MAX_FILE_SIZE,
 )
 from app.services.embedding_service import EmbeddingService
-from fastapi import FastAPI, HTTPException, File, UploadFile, Request
-from fastapi.middleware.cors import CORSMiddleware
 
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi import (
+    FastAPI,
+    File,
+    HTTPException,
+    Request,
+    UploadFile,
+)
 from app.utils.rate_limiter import (
     InMemoryRateLimiter,
     RateLimitRule,
@@ -93,8 +97,15 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=[
+        "GET",
+        "POST",
+        "OPTIONS",
+    ],
+    allow_headers=[
+        "Content-Type",
+        "Authorization",
+    ],
 )
 @app.middleware("http")
 async def rate_limit_requests(
@@ -134,10 +145,6 @@ async def rate_limit_requests(
             )
 
     return await call_next(request)
-rag_service = RAGService(
-    embedding_service=embedding_service,
-    vector_store=vector_store,
-)
 
 ai_service = AIService()
 
