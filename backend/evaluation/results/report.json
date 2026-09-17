@@ -1,0 +1,38 @@
+{
+  "total_cases": 2,
+  "passed_cases": 1,
+  "failed_cases": 1,
+  "pass_rate": 0.5,
+  "latency_ms": {
+    "average": 65311.25,
+    "median": 65311.25,
+    "p95": 65311.25,
+    "minimum": 65311.25,
+    "maximum": 65311.25
+  },
+  "metrics": {
+    "expected_fact_coverage": {
+      "average": 0.0,
+      "minimum": 0.0,
+      "maximum": 0.0
+    },
+    "hallucination_free": {
+      "average": 1.0,
+      "minimum": 1.0,
+      "maximum": 1.0
+    },
+    "llm_judge": {
+      "average": 1.0,
+      "minimum": 1.0,
+      "maximum": 1.0
+    }
+  },
+  "categories": {
+    "relevance": {
+      "total": 2,
+      "passed": 1,
+      "failed": 1,
+      "pass_rate": 0.5
+    }
+  }
+}

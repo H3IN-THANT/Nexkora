@@ -1,3 +1,5 @@
+from fastapi.responses import JSONResponse
+
 from app.services.rag_service import RAGService
 from app.services.vector_store import VectorStore
 
@@ -21,7 +23,13 @@ from app.services.document_service import (
     MAX_FILE_SIZE,
 )
 from app.services.embedding_service import EmbeddingService
+from fastapi import FastAPI, HTTPException, File, UploadFile, Request
+from fastapi.middleware.cors import CORSMiddleware
 
+from app.utils.rate_limiter import (
+    InMemoryRateLimiter,
+    RateLimitRule,
+)
 load_dotenv()
 document_service = DocumentService()
 
@@ -54,6 +62,32 @@ ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
 ]
 
+RATE_LIMIT_RULES = {
+    "/api/v1/chat": RateLimitRule(
+        max_requests=20,
+        window_seconds=60,
+    ),
+    "/api/v1/documents/ask": RateLimitRule(
+        max_requests=20,
+        window_seconds=60,
+    ),
+    "/api/v1/documents/upload": RateLimitRule(
+        max_requests=5,
+        window_seconds=60,
+    ),
+    "/api/v1/github/ask": RateLimitRule(
+        max_requests=20,
+        window_seconds=60,
+    ),
+    "/api/v1/github/index": RateLimitRule(
+        max_requests=3,
+        window_seconds=600,
+    ),
+}
+
+rate_limiter = InMemoryRateLimiter(
+    rules=RATE_LIMIT_RULES,
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -62,7 +96,44 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+@app.middleware("http")
+async def rate_limit_requests(
+    request: Request,
+    call_next,
+):
+    path = request.url.path
 
+    if path in RATE_LIMIT_RULES:
+        client_id = (
+            request.client.host
+            if request.client
+            else "unknown"
+        )
+
+        allowed, retry_after = (
+            rate_limiter.check(
+                client_id=client_id,
+                path=path,
+            )
+        )
+
+        if not allowed:
+            return JSONResponse(
+                status_code=429,
+                content={
+                    "detail": (
+                        "Too many requests. "
+                        "Please try again later."
+                    )
+                },
+                headers={
+                    "Retry-After": str(
+                        retry_after
+                    ),
+                },
+            )
+
+    return await call_next(request)
 rag_service = RAGService(
     embedding_service=embedding_service,
     vector_store=vector_store,
@@ -230,3 +301,4 @@ async def ask_document(
             status_code=502,
             detail="Unable to answer the document question.",
         ) from exc
+
