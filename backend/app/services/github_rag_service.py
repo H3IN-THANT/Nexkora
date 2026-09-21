@@ -1,4 +1,7 @@
-from app.services.document_service import DocumentService
+from app.services.document_service import (
+    Document,
+    DocumentService,
+)
 from app.services.github_document_service import (
     GitHubDocumentService,
 )
@@ -57,21 +60,23 @@ class GitHubRAGService:
             if not text:
                 continue
 
-            document = self.document_service.create_document(
-            filename=file.path,
-            content=text.encode("utf-8"),
-            metadata={
-                "repository": repository_name,
-                "path": file.path,
-            },
-        )
+            document = Document(
+    document_id=(
+        f"github:"
+        f"{repository.owner}/"
+        f"{repository.name}:"
+        f"{file.path}"
+    ),
+    filename=file.path,
+    text=text,
+    chunks=self.document_service.chunk_text(text),
+    metadata={
+        "repository": repository_name,
+        "path": file.path,
+    },
+)
 
-            document.document_id = (
-                f"github:"
-                f"{repository.owner}/"
-                f"{repository.name}:"
-                f"{file.path}"
-            )
+           
 
             chunk_count = self.rag_service.index_document(
                 document
@@ -97,11 +102,12 @@ class GitHubRAGService:
     ) -> list[dict]:
         """Retrieve relevant chunks from a specific GitHub repository."""
 
-        owner, repository_name = self.github_service.parse_repository_url(
-            repository
-        )
+        repository_key = repository.strip()
 
-        repository_key = f"{owner}/{repository_name}"
+        if "/" not in repository_key:
+            raise ValueError(
+                "Invalid repository format. Expected owner/name."
+            )
 
         query_embedding = self.rag_service.embedding_service.embed_query(
             question
