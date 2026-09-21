@@ -1,3 +1,5 @@
+import os
+
 from fastapi.responses import JSONResponse
 
 from app.services.rag_service import RAGService
@@ -64,6 +66,7 @@ app.include_router(
 ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    os.getenv("FRONTEND_URL", ""),
 ]
 
 RATE_LIMIT_RULES = {

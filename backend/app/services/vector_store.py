@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 
 try:
     import chromadb  # type: ignore[import-not-found]
@@ -10,12 +11,17 @@ except ModuleNotFoundError as exc:
 
 
 VECTOR_DB_PATH = (
-    Path(__file__).resolve().parents[2]
-    / "data"
-    / "chroma"
+   os.getenv(
+        "CHROMA_DB_PATH",
+        str(
+            Path(__file__).resolve().parents[2]
+            / "data"
+            / "chroma"
+        ),
+    )
 )
 
-COLLECTION_NAME = "nexkora_documents_local"
+COLLECTION_NAME = "nexkora_documents"
 
 
 class VectorStore:
